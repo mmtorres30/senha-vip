@@ -1,7 +1,7 @@
 {
   "name": "Camarote Atmosfera - Senha VIP",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "postAttachCommand": "python3 -m http.server 5500",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "postAttachCommand": "npx --yes serve -l 5500",
   "forwardPorts": [5500],
   "portsAttributes": {
     "5500": {
