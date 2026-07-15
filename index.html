@@ -49,12 +49,14 @@
   .brand-mark{text-align:center; margin-bottom:36px;}
   .logo-badge{
     display:inline-flex; align-items:center; justify-content:center;
-    margin:0 auto 18px; max-width:260px;
+    margin:0 auto 18px;
   }
-  .logo-badge img{
-    display:block; width:100%; height:auto; max-height:46px; object-fit:contain;
-    filter:invert(1) brightness(1.6) contrast(0.92);
-    opacity:0.92;
+  .logo-mask{
+    width:230px; height:56px;
+    background-color:var(--gold-bright);
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-size:contain; mask-size:contain;
   }
   .logo-badge.hidden{display:none;}
   .crest-fallback{
@@ -110,7 +112,7 @@
   .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--line); gap:12px;}
   .topbar .who{display:flex; align-items:center; gap:10px; min-width:0;}
   .topbar .logo-badge{margin:0; padding:0; flex-shrink:0;}
-  .topbar .logo-badge img{max-height:26px;}
+  .topbar .logo-mask{width:112px; height:27px;}
   .badge-counter{
     width:34px; height:34px; border-radius:50%; border:1px solid var(--gold); flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
@@ -163,7 +165,7 @@
   .tv-header{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;}
   .tv-brand{display:flex; align-items:center; gap:14px;}
   .tv-brand .logo-badge{margin:0; padding:0;}
-  .tv-brand .logo-badge img{max-height:34px;}
+  .tv-brand .logo-mask{width:150px; height:37px;}
   .tv-brand span{font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600;}
   .tv-clock{font-family:'Playfair Display',serif; font-size:20px; color:var(--gold); letter-spacing:.03em;}
 
@@ -321,7 +323,8 @@ function formatSenha(tipoKey, numero){ return tipoInfo(tipoKey).prefixo + '-' + 
 
 function logoBadgeHtml(extraClass){
   return `<div class="logo-badge ${extraClass||''}" id="logoBadge_${extraClass||'x'}">
-    <img src="${LOGO_URL}" alt="Logo" onerror="this.closest('.logo-badge').style.display='none'; this.closest('.logo-badge').nextElementSibling.style.display='flex';">
+    <div class="logo-mask" style="-webkit-mask-image:url('${LOGO_URL}'); mask-image:url('${LOGO_URL}');"></div>
+    <img src="${LOGO_URL}" alt="Logo" style="display:none;" onerror="const b=this.closest('.logo-badge'); b.style.display='none'; b.nextElementSibling.style.display='flex';">
   </div>
   <div class="crest-fallback">A</div>`;
 }
