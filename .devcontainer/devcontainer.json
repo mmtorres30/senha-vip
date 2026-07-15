@@ -1,18 +1,12 @@
 {
   "name": "Camarote Atmosfera - Senha VIP",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "postCreateCommand": "npm install -g live-server",
-  "postAttachCommand": "live-server --port=5500 --open=/index.html",
+  "postAttachCommand": "python3 -m http.server 5500",
   "forwardPorts": [5500],
   "portsAttributes": {
     "5500": {
       "label": "Prévia ao vivo",
       "onAutoForward": "openPreview"
-    }
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": ["ritwickdey.LiveServer"]
     }
   }
 }
