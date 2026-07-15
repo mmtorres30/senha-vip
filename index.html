@@ -49,10 +49,13 @@
   .brand-mark{text-align:center; margin-bottom:36px;}
   .logo-badge{
     display:inline-flex; align-items:center; justify-content:center;
-    background:var(--cream); border-radius:8px; padding:12px 18px;
     margin:0 auto 18px; max-width:260px;
   }
-  .logo-badge img{display:block; width:100%; height:auto; max-height:46px; object-fit:contain;}
+  .logo-badge img{
+    display:block; width:100%; height:auto; max-height:46px; object-fit:contain;
+    filter:invert(1) brightness(1.6) contrast(0.92);
+    opacity:0.92;
+  }
   .logo-badge.hidden{display:none;}
   .crest-fallback{
     width:54px; height:54px; margin:0 auto 18px;
@@ -106,7 +109,7 @@
 
   .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--line); gap:12px;}
   .topbar .who{display:flex; align-items:center; gap:10px; min-width:0;}
-  .topbar .logo-badge{margin:0; padding:6px 12px; flex-shrink:0;}
+  .topbar .logo-badge{margin:0; padding:0; flex-shrink:0;}
   .topbar .logo-badge img{max-height:26px;}
   .badge-counter{
     width:34px; height:34px; border-radius:50%; border:1px solid var(--gold); flex-shrink:0;
@@ -159,7 +162,7 @@
   .tv-screen::before{content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 1200px 700px at 50% 0%, rgba(217,181,113,0.09), transparent 65%);}
   .tv-header{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;}
   .tv-brand{display:flex; align-items:center; gap:14px;}
-  .tv-brand .logo-badge{margin:0; padding:8px 16px;}
+  .tv-brand .logo-badge{margin:0; padding:0;}
   .tv-brand .logo-badge img{max-height:34px;}
   .tv-brand span{font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600;}
   .tv-clock{font-family:'Playfair Display',serif; font-size:20px; color:var(--gold); letter-spacing:.03em;}
