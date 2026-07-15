@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salão — Sistema de Senhas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --void:#090B0D;
+    --panel:#12161A;
+    --panel-2:#181D22;
+    --panel-3:#1F2530;
+    --gold:#D9B571;
+    --gold-bright:#F2D89A;
+    --gold-dim:#8A7143;
+    --emerald:#0E3B34;
+    --emerald-light:#175449;
+    --cream:#F4EEE1;
+    --muted:#8B8578;
+    --line:rgba(217,181,113,0.22);
+    --line-strong:rgba(217,181,113,0.45);
+    --danger:#B4553F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(217,181,113,0.08), transparent 60%),
+      var(--void);
+    color:var(--cream);
+    font-family:'Manrope',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .serif{font-family:'Playfair Display',serif;}
+  .eyebrow{
+    font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--gold); font-weight:600;
+  }
+  ::selection{background:var(--gold); color:#1a1508;}
+  button{font-family:inherit;}
+  input{font-family:inherit;}
+
+  .screen{min-height:100vh; display:flex; flex-direction:column;}
+  .center{align-items:center; justify-content:center;}
+  .wrap{width:100%; max-width:520px; margin:0 auto; padding:32px 20px;}
+
+  .brand-mark{text-align:center; margin-bottom:44px;}
+  .brand-mark .crest{
+    width:54px; height:54px; margin:0 auto 18px;
+    border:1px solid var(--line-strong); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gold); font-family:'Playfair Display',serif; font-size:22px;
+  }
+  .brand-mark h1{font-size:26px; font-weight:600; margin:0 0 6px; letter-spacing:.02em;}
+  .brand-mark p{color:var(--muted); font-size:13px; margin:0; letter-spacing:.05em;}
+
+  .choice-card{
+    display:block; width:100%; text-align:left;
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line); border-radius:4px;
+    padding:22px 24px; margin-bottom:14px; cursor:pointer;
+    transition:border-color .2s ease, transform .2s ease;
+    color:var(--cream);
+  }
+  .choice-card:hover{border-color:var(--line-strong); transform:translateY(-1px);}
+  .choice-card .row{display:flex; align-items:center; justify-content:space-between;}
+  .choice-card h3{font-family:'Playfair Display',serif; font-size:19px; font-weight:600; margin:0 0 4px;}
+  .choice-card p{font-size:12.5px; color:var(--muted); margin:0;}
+  .choice-card .arrow{color:var(--gold); font-size:20px; font-weight:300;}
+
+  .field{margin-bottom:18px;}
+  .field label{display:block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:8px; font-weight:600;}
+  .field select, .field input[type=text], .field input[type=number]{
+    width:100%; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--cream); padding:13px 14px; border-radius:3px; font-size:15px;
+    outline:none; transition:border-color .15s ease;
+  }
+  .field select:focus, .field input:focus{border-color:var(--gold);}
+  .field select{appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23D9B571' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 14px center;}
+
+  .btn{
+    display:block; width:100%; text-align:center; cursor:pointer;
+    border-radius:3px; padding:15px 18px; font-size:13px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase; border:1px solid transparent;
+    transition:transform .12s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(.985);}
+  .btn-gold{background:linear-gradient(180deg, var(--gold-bright), var(--gold)); color:#231B0C; border-color:var(--gold);}
+  .btn-gold:hover{opacity:.92;}
+  .btn-ghost{background:transparent; color:var(--cream); border-color:var(--line);}
+  .btn-ghost:hover{border-color:var(--line-strong);}
+  .btn-emerald{background:linear-gradient(180deg, var(--emerald-light), var(--emerald)); color:var(--cream); border-color:rgba(255,255,255,0.08);}
+  .btn[disabled]{opacity:.4; cursor:not-allowed;}
+  .link-quiet{background:none; border:none; color:var(--muted); font-size:12px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:6px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--line);}
+  .topbar .who{display:flex; align-items:center; gap:10px;}
+  .badge-counter{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Playfair Display',serif; font-weight:700; color:var(--gold); font-size:15px;
+  }
+  .topbar .name{font-size:14px; font-weight:600;}
+  .topbar .role{font-size:11px; color:var(--muted); letter-spacing:.05em;}
+  .exit-btn{background:none; border:1px solid var(--line); color:var(--muted); font-size:11px; padding:7px 12px; border-radius:3px; cursor:pointer; letter-spacing:.05em;}
+
+  .call-stage{text-align:center; padding:36px 20px 8px;}
+  .call-stage .eyebrow{display:block; margin-bottom:10px;}
+  .big-call-btn{
+    width:190px; height:190px; border-radius:50%; margin:0 auto;
+    background:radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 60%, var(--gold-dim) 100%);
+    border:none; cursor:pointer; color:#231B0C;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    box-shadow:0 0 0 1px rgba(217,181,113,.5), 0 18px 40px -14px rgba(217,181,113,.55);
+    transition:transform .12s ease;
+  }
+  .big-call-btn:active{transform:scale(.97);}
+  .big-call-btn .lbl{font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;}
+  .big-call-btn .sub{font-size:10px; margin-top:4px; font-weight:600; opacity:.75;}
+
+  .divider-word{display:flex; align-items:center; gap:12px; margin:28px 0 18px; color:var(--muted); font-size:11px; letter-spacing:.14em; text-transform:uppercase;}
+  .divider-word::before, .divider-word::after{content:''; flex:1; height:1px; background:var(--line);}
+
+  .row-2{display:flex; gap:10px;}
+  .row-2 .field{flex:1;}
+
+  .last-called{margin-top:26px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:16px 18px;}
+  .last-called .lc-row{display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(217,181,113,0.1);}
+  .last-called .lc-row:last-child{border-bottom:none;}
+  .lc-num{font-family:'Playfair Display',serif; font-weight:700; font-size:17px; color:var(--gold-bright);}
+  .lc-meta{font-size:11px; color:var(--muted);}
+
+  .tv-screen{min-height:100vh; display:flex; flex-direction:column; padding:28px 40px; position:relative; overflow:hidden;}
+  .tv-screen::before{content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 1200px 700px at 50% 0%, rgba(217,181,113,0.09), transparent 65%);}
+  .tv-header{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;}
+  .tv-brand{display:flex; align-items:center; gap:12px;}
+  .tv-brand .crest{width:34px; height:34px; border:1px solid var(--line-strong); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--gold); font-family:'Playfair Display',serif; font-size:15px;}
+  .tv-brand span{font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600;}
+  .tv-clock{font-family:'Playfair Display',serif; font-size:20px; color:var(--gold); letter-spacing:.03em;}
+
+  .plaque-zone{flex:1; display:flex; align-items:center; justify-content:center; position:relative; z-index:1;}
+  .plaque{
+    position:relative; width:min(680px, 90vw); padding:56px 40px 46px;
+    border:1px solid var(--line-strong); border-radius:6px;
+    background:linear-gradient(180deg, rgba(217,181,113,0.05), transparent 40%), var(--panel);
+    text-align:center;
+    transition:box-shadow .5s ease;
+  }
+  .plaque.pulse{animation:pulseGlow 1.8s ease;}
+  @keyframes pulseGlow{
+    0%{box-shadow:0 0 0 0 rgba(217,181,113,0);}
+    12%{box-shadow:0 0 0 3px rgba(217,181,113,.55), 0 0 70px 10px rgba(217,181,113,.35);}
+    100%{box-shadow:0 0 0 0 rgba(217,181,113,0);}
+  }
+  .corner{position:absolute; width:22px; height:22px; border:1px solid var(--gold);}
+  .corner.tl{top:-1px; left:-1px; border-right:none; border-bottom:none;}
+  .corner.tr{top:-1px; right:-1px; border-left:none; border-bottom:none;}
+  .corner.bl{bottom:-1px; left:-1px; border-right:none; border-top:none;}
+  .corner.br{bottom:-1px; right:-1px; border-left:none; border-top:none;}
+  .plaque .eyebrow{display:block; margin-bottom:18px;}
+  .plaque .num{
+    font-family:'Playfair Display',serif; font-weight:900; font-size:clamp(80px,14vw,160px);
+    line-height:1; color:var(--gold-bright); letter-spacing:.02em;
+    text-shadow:0 0 40px rgba(217,181,113,0.35);
+  }
+  .plaque .counter-line{margin-top:22px; font-size:16px; letter-spacing:.08em; color:var(--cream);}
+  .plaque .counter-line b{color:var(--gold); font-weight:700;}
+  .plaque .attendant{margin-top:6px; font-size:12px; color:var(--muted); letter-spacing:.05em;}
+  .plaque.empty .num{font-size:clamp(30px,4.2vw,44px); color:var(--muted); font-weight:600;}
+
+  .ticker{position:relative; z-index:1; border-top:1px solid var(--line); padding-top:16px; margin-top:10px; display:flex; align-items:center; gap:24px; overflow-x:auto;}
+  .ticker .tk-label{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-dim); font-weight:700; flex-shrink:0;}
+  .ticker .tk-item{flex-shrink:0; display:flex; align-items:baseline; gap:6px; color:var(--muted); font-size:14px;}
+  .ticker .tk-item b{color:var(--cream); font-family:'Playfair Display',serif; font-size:16px;}
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--panel-3); border:1px solid var(--line-strong); color:var(--cream);
+    padding:11px 20px; border-radius:4px; font-size:13px; opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease; z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+  .setup-warning{
+    background:rgba(180,85,63,0.12); border:1px solid rgba(180,85,63,0.4); color:#E3A796;
+    padding:16px 18px; border-radius:4px; font-size:13px; line-height:1.6; margin-bottom:20px;
+  }
+  .setup-warning code{background:rgba(0,0,0,0.3); padding:1px 6px; border-radius:3px; font-size:12px;}
+
+  @media (max-width:640px){
+    .tv-screen{padding:20px;}
+    .plaque{padding:40px 20px 32px;}
+    .tv-clock{font-size:15px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO — cole aqui os dados do seu projeto Supabase
+   (Painel Supabase > Settings > API)
+   ============================================================ */
+const SUPABASE_URL = 'https://igeatakyqxndohaviwpm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_8lU7KgwXmUQyD_Kh3YNytg_q0hpcGJz';
+/* ============================================================ */
+
+const configured = !SUPABASE_URL.startsWith('COLE_AQUI') && !SUPABASE_ANON_KEY.startsWith('COLE_AQUI');
+const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let view = 'gate';
+let myCounter = null;
+let myName = '';
+let lastMineCall = null;
+let clockTimer = null;
+let pollTimer = null;
+let lastSeenTs = null;
+let hasInitializedDisplay = false;
+
+const app = document.getElementById('app');
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+
+/* ---------------- Supabase helpers ---------------- */
+
+async function getEstado(){
+  const { data, error } = await sb.from('fila_estado').select('*').eq('id', 1).single();
+  if(error){ console.error(error); return null; }
+  return data;
+}
+async function atualizarEstado(patch){
+  const { error } = await sb.from('fila_estado').update(patch).eq('id', 1);
+  if(error) console.error(error);
+}
+async function inserirHistorico(row){
+  const { error } = await sb.from('fila_historico').insert(row);
+  if(error) console.error(error);
+}
+async function getHistorico(){
+  const { data, error } = await sb.from('fila_historico').select('*').order('id', {ascending:false}).limit(8);
+  if(error){ console.error(error); return []; }
+  return data;
+}
+
+async function registrarChamada(number, counter, name){
+  const ts = Date.now();
+  await atualizarEstado({ current_number:number, current_counter:counter, current_name:name, current_ts:ts });
+  await inserirHistorico({ numero:number, guiche:counter, nome:name, ts });
+  const call = {number, counter, name, ts};
+  lastMineCall = call;
+  return call;
+}
+
+async function chamarProxima(){
+  const btn = document.getElementById('bigCallBtn');
+  if(btn) btn.disabled = true;
+  const estado = await getEstado();
+  if(!estado){ if(btn) btn.disabled = false; return; }
+  const next = estado.next_number;
+  await atualizarEstado({ next_number: next + 1 });
+  const name = myName || ('Guichê ' + myCounter);
+  const call = await registrarChamada(next, myCounter, name);
+  toast('Senha ' + pad3(call.number) + ' chamada para o Guichê ' + myCounter);
+  if(btn) btn.disabled = false;
+  renderAttendantHistory();
+}
+
+async function chamarEspecifica(){
+  const input = document.getElementById('specificInput');
+  const n = parseInt(input.value, 10);
+  if(!n || n <= 0){ toast('Informe um número válido'); return; }
+  const estado = await getEstado();
+  if(!estado) return;
+  if(n >= estado.next_number) await atualizarEstado({ next_number: n + 1 });
+  const name = myName || ('Guichê ' + myCounter);
+  const call = await registrarChamada(n, myCounter, name);
+  input.value = '';
+  toast('Senha ' + pad3(call.number) + ' chamada para o Guichê ' + myCounter);
+  renderAttendantHistory();
+}
+
+async function rechamar(){
+  if(!lastMineCall){ toast('Nenhuma senha chamada ainda'); return; }
+  await registrarChamada(lastMineCall.number, lastMineCall.counter, lastMineCall.name);
+  toast('Rechamando senha ' + pad3(lastMineCall.number));
+  renderAttendantHistory();
+}
+
+async function reiniciarSistema(){
+  if(!confirm('Reiniciar a contagem de senhas e o histórico? Esta ação não pode ser desfeita.')) return;
+  await atualizarEstado({ next_number:1, current_number:null, current_counter:null, current_name:null, current_ts:null });
+  await sb.from('fila_historico').delete().gte('id', 0);
+  toast('Sistema reiniciado');
+  lastMineCall = null;
+  renderAttendantHistory();
+}
+
+/* ---------------- VIEWS ---------------- */
+
+function renderSetupWarning(){
+  return `<div class="setup-warning">
+    Configuração pendente: abra este arquivo, encontre <code>SUPABASE_URL</code> e
+    <code>SUPABASE_ANON_KEY</code> no início do código e cole os dados do seu projeto
+    (Supabase &gt; Settings &gt; API). Depois salve e recarregue a página.
+  </div>`;
+}
+
+function renderGate(){
+  view = 'gate';
+  app.innerHTML = `
+    <div class="screen center">
+      <div class="wrap">
+        <div class="brand-mark">
+          <div class="crest">S</div>
+          <h1 class="serif">Salão — Senhas</h1>
+          <p>Selecione como deseja acessar o sistema</p>
+        </div>
+        ${!configured ? renderSetupWarning() : ''}
+        <button class="choice-card" ${!configured?'disabled':''} onclick="renderAttendantSetup()">
+          <div class="row">
+            <div>
+              <h3>Painel do Atendente</h3>
+              <p>Para uso em computador ou celular no guichê</p>
+            </div>
+            <span class="arrow">→</span>
+          </div>
+        </button>
+        <button class="choice-card" ${!configured?'disabled':''} onclick="renderDisplay()">
+          <div class="row">
+            <div>
+              <h3>Painel de Chamada</h3>
+              <p>Para exibir na TV ou monitor da sala de espera</p>
+            </div>
+            <span class="arrow">→</span>
+          </div>
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderAttendantSetup(){
+  view = 'attendant-setup';
+  app.innerHTML = `
+    <div class="screen center">
+      <div class="wrap">
+        <div class="brand-mark">
+          <div class="crest">S</div>
+          <h1 class="serif">Identifique-se</h1>
+          <p>Configuração deste guichê</p>
+        </div>
+        <div class="field">
+          <label>Guichê</label>
+          <select id="counterSelect">
+            ${Array.from({length:10}, (_,i)=>i+1).map(n=>`<option value="${n}">Guichê ${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Nome do atendente (opcional)</label>
+          <input type="text" id="nameInput" placeholder="Ex.: Camila">
+        </div>
+        <button class="btn btn-gold" onclick="confirmAttendantSetup()">Entrar no painel</button>
+        <div style="text-align:center; margin-top:16px;">
+          <button class="link-quiet" onclick="renderGate()">Voltar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function confirmAttendantSetup(){
+  myCounter = parseInt(document.getElementById('counterSelect').value, 10);
+  myName = document.getElementById('nameInput').value.trim();
+  renderAttendant();
+}
+
+async function renderAttendant(){
+  view = 'attendant';
+  app.innerHTML = `
+    <div class="screen">
+      <div class="topbar">
+        <div class="who">
+          <div class="badge-counter">${myCounter}</div>
+          <div>
+            <div class="name">${myName ? myName : 'Guichê ' + myCounter}</div>
+            <div class="role">Painel do atendente</div>
+          </div>
+        </div>
+        <button class="exit-btn" onclick="renderGate()">Sair</button>
+      </div>
+      <div class="wrap">
+        <div class="call-stage">
+          <span class="eyebrow">Chamar próximo cliente</span>
+          <button class="big-call-btn" id="bigCallBtn" onclick="chamarProxima()">
+            <span class="lbl">Chamar</span>
+            <span class="sub">Próxima senha</span>
+          </button>
+        </div>
+
+        <div class="divider-word">ou chame um número específico</div>
+        <div class="row-2">
+          <div class="field" style="margin-bottom:0;">
+            <input type="number" id="specificInput" placeholder="Nº da senha" min="1">
+          </div>
+          <button class="btn btn-emerald" style="width:auto; padding:0 20px; flex-shrink:0;" onclick="chamarEspecifica()">Chamar</button>
+        </div>
+
+        <div style="margin-top:14px;">
+          <button class="btn btn-ghost" onclick="rechamar()">Rechamar última senha</button>
+        </div>
+
+        <div class="last-called" id="lastCalledBox"></div>
+
+        <div style="text-align:center; margin-top:22px;">
+          <button class="link-quiet" onclick="reiniciarSistema()">Reiniciar sistema (zerar contagem)</button>
+        </div>
+      </div>
+    </div>`;
+  renderAttendantHistory();
+}
+
+async function renderAttendantHistory(){
+  const box = document.getElementById('lastCalledBox');
+  if(!box) return;
+  const hist = await getHistorico();
+  if(hist.length === 0){
+    box.innerHTML = `<div class="lc-meta">Nenhuma senha chamada ainda.</div>`;
+    return;
+  }
+  box.innerHTML = hist.slice(0,6).map(c => `
+    <div class="lc-row">
+      <span class="lc-num">${pad3(c.numero)}</span>
+      <span class="lc-meta">Guichê ${c.guiche} · ${fmtTime(c.ts)}</span>
+    </div>`).join('');
+}
+
+function renderDisplay(){
+  view = 'display';
+  hasInitializedDisplay = false;
+  lastSeenTs = null;
+  app.innerHTML = `
+    <div class="tv-screen">
+      <div class="tv-header">
+        <div class="tv-brand">
+          <div class="crest">S</div>
+          <span>Salão · Painel de chamada</span>
+        </div>
+        <div class="tv-clock serif" id="tvClock">--:--</div>
+      </div>
+      <div class="plaque-zone">
+        <div class="plaque empty" id="plaque">
+          <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+          <span class="eyebrow">Aguardando</span>
+          <div class="num" id="plaqueNum">Bem-vindo</div>
+          <div class="counter-line" id="plaqueCounter"></div>
+        </div>
+      </div>
+      <div class="ticker" id="ticker">
+        <span class="tk-label">Últimas</span>
+      </div>
+    </div>`;
+  startClock();
+  pollDisplay();
+  clearInterval(pollTimer);
+  pollTimer = setInterval(pollDisplay, 2500);
+}
+
+function startClock(){
+  clearInterval(clockTimer);
+  const tick = () => {
+    const el = document.getElementById('tvClock');
+    if(!el){ clearInterval(clockTimer); return; }
+    el.textContent = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  };
+  tick();
+  clockTimer = setInterval(tick, 1000);
+}
+
+function falarChamada(number, counter){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const utter = new SpeechSynthesisUtterance('Senha ' + pad3(number).split('').join(' ') + ', dirija-se ao guichê ' + counter);
+    utter.lang = 'pt-BR';
+    utter.rate = 0.95;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }catch(e){}
+}
+
+async function pollDisplay(){
+  if(view !== 'display') return;
+  const estado = await getEstado();
+  const hist = await getHistorico();
+  renderTicker(hist);
+
+  const plaque = document.getElementById('plaque');
+  const numEl = document.getElementById('plaqueNum');
+  const counterEl = document.getElementById('plaqueCounter');
+  const eyebrowEl = plaque ? plaque.querySelector('.eyebrow') : null;
+  if(!plaque) return;
+
+  if(!estado || !estado.current_number){
+    plaque.classList.add('empty');
+    eyebrowEl.textContent = 'Aguardando';
+    numEl.textContent = 'Bem-vindo';
+    counterEl.textContent = '';
+    hasInitializedDisplay = true;
+    return;
+  }
+
+  if(!hasInitializedDisplay){
+    hasInitializedDisplay = true;
+    lastSeenTs = estado.current_ts;
+  } else if(estado.current_ts !== lastSeenTs){
+    lastSeenTs = estado.current_ts;
+    plaque.classList.remove('pulse');
+    void plaque.offsetWidth;
+    plaque.classList.add('pulse');
+    falarChamada(estado.current_number, estado.current_counter);
+  }
+
+  plaque.classList.remove('empty');
+  eyebrowEl.textContent = 'Senha atual';
+  numEl.textContent = pad3(estado.current_number);
+  counterEl.innerHTML = 'Dirija-se ao <b>Guichê ' + estado.current_counter + '</b>' + (estado.current_name ? ' · ' + estado.current_name : '');
+}
+
+function renderTicker(hist){
+  const t = document.getElementById('ticker');
+  if(!t) return;
+  const items = hist.slice(1, 7);
+  t.innerHTML = '<span class="tk-label">Últimas</span>' + items.map(c =>
+    `<span class="tk-item"><b>${pad3(c.numero)}</b> Guichê ${c.guiche}</span>`
+  ).join('') + (items.length === 0 ? '<span class="tk-item" style="opacity:.5;">—</span>' : '');
+}
+
+window.confirmAttendantSetup = confirmAttendantSetup;
+window.renderGate = renderGate;
+window.renderAttendantSetup = renderAttendantSetup;
+window.renderDisplay = renderDisplay;
+window.chamarProxima = chamarProxima;
+window.chamarEspecifica = chamarEspecifica;
+window.rechamar = rechamar;
+window.reiniciarSistema = reiniciarSistema;
+
+renderGate();
+</script>
+</body>
+</html>
