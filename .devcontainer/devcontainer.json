@@ -10,3 +10,189 @@
     }
   }
 }
+python3 - << 'EOF'
+with open('index.html', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+old1 = """  .logo-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    margin:0 auto 18px; max-width:260px;
+  }
+  .logo-badge img{
+    display:block; width:100%; height:auto; max-height:46px; object-fit:contain;
+    filter:invert(1) brightness(1.6) contrast(0.92);
+    opacity:0.92;
+  }"""
+
+new1 = """  .logo-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    margin:0 auto 18px;
+  }
+  .logo-mask{
+    width:230px; height:56px;
+    background-color:var(--gold-bright);
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-size:contain; mask-size:contain;
+  }"""
+
+content = content.replace(old1, new1)
+
+content = content.replace(
+    ".topbar .logo-badge img{max-height:26px;}",
+    ".topbar .logo-mask{width:112px; height:27px;}"
+)
+content = content.replace(
+    ".tv-brand .logo-badge img{max-height:34px;}",
+    ".tv-brand .logo-mask{width:150px; height:37px;}"
+)
+
+old_js = """function logoBadgeHtml(extraClass){
+  return `<div class="logo-badge ${extraClass||''}" id="logoBadge_${extraClass||'x'}">
+    <img src="${LOGO_URL}" alt="Logo" onerror="this.closest('.logo-badge').style.display='none'; this.closest('.logo-badge').nextElementSibling.style.display='flex';">
+  </div>
+  <div class="crest-fallback">A</div>`;
+}"""
+
+new_js = """function logoBadgeHtml(extraClass){
+  return `<div class="logo-badge ${extraClass||''}" id="logoBadge_${extraClass||'x'}">
+    <div class="logo-mask" style="-webkit-mask-image:url('${LOGO_URL}'); mask-image:url('${LOGO_URL}');"></div>
+    <img src="${LOGO_URL}" alt="Logo" style="display:none;" onerror="const b=this.closest('.logo-badge'); b.style.display='none'; b.nextElementSibling.style.display='flex';">
+  </div>
+  <div class="crest-fallback">A</div>`;
+}"""
+
+content = content.replace(old_js, new_js)
+
+with open('index.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print("Substituições feitas.")
+EOF
+git add -A
+git commit -m "logo em dourado"
+git push
+python3 - << 'EOF'
+with open('index.html', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+content = content.replace(
+"""        <div class="divider-word">adicionar à fila deste tipo</div>
+        <button class="btn btn-ghost" onclick="emitirSenhaClick()">+ Emitir nova senha</button>
+
+        <div class="divider-word">ou chamar um número específico</div>""",
+"""        <div class="queue-list-wrap">
+          <span class="eyebrow" style="display:block; margin-bottom:10px;">Fila de espera — <span id="queueTipoLabel"></span></span>
+          <div class="queue-list" id="queueList"></div>
+        </div>
+
+        <div class="divider-word">ou chamar um número específico</div>"""
+)
+
+content = content.replace(
+"""  .last-called{margin-top:24px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:16px 18px;}""",
+"""  .queue-list-wrap{margin-top:22px;}
+  .queue-list{display:flex; flex-wrap:wrap; gap:8px;}
+  .queue-chip{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--gold-bright);
+    font-family:'Playfair Display',serif; font-weight:700; font-size:13px;
+    padding:6px 13px; border-radius:20px;
+  }
+  .queue-chip.first{border-color:var(--gold); background:rgba(217,181,113,0.14);}
+  .queue-empty{color:var(--muted); font-size:12px;}
+
+  .last-called{margin-top:24px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:16px 18px;}""",
+1
+)
+
+content = content.replace(
+"""async function getProximaAguardando(tipo){
+  const { data, error } = await sb.from('senha_fila').select('*').eq('tipo', tipo).is('ts_chamada', null).order('numero', {ascending:true}).limit(1);
+  if(error){ console.error(error); return null; }
+  return (data && data[0]) ? data[0] : null;
+}""",
+"""async function getProximaAguardando(tipo){
+  const { data, error } = await sb.from('senha_fila').select('*').eq('tipo', tipo).is('ts_chamada', null).order('numero', {ascending:true}).limit(1);
+  if(error){ console.error(error); return null; }
+  return (data && data[0]) ? data[0] : null;
+}
+async function getAguardandoLista(tipo, limit){
+  const { data, error } = await sb.from('senha_fila').select('*').eq('tipo', tipo).is('ts_chamada', null).order('numero', {ascending:true}).limit(limit||20);
+  if(error){ console.error(error); return []; }
+  return data;
+}"""
+)
+
+content = content.replace(
+"""async function emitirSenhaClick(){
+  await emitirSenha(activeTipo);
+  await refreshWaitingCounts();
+  renderAttendantDynamic();
+}""",
+"""async function refreshQueueList(){
+  const box = document.getElementById('queueList');
+  const label = document.getElementById('queueTipoLabel');
+  if(!box) return;
+  const t = tipoInfo(activeTipo);
+  if(label) label.textContent = t.label;
+  const list = await getAguardandoLista(activeTipo, 24);
+  if(list.length === 0){
+    box.innerHTML = `<span class="queue-empty">Fila vazia — nenhuma senha aguardando</span>`;
+    return;
+  }
+  box.innerHTML = list.map((r,i) => `<span class="queue-chip ${i===0?'first':''}">${formatSenha(r.tipo, r.numero)}</span>`).join('');
+}"""
+)
+
+content = content.replace(
+"""function setActiveTipo(key){
+  activeTipo = key;
+  renderAttendantDynamic();
+}""",
+"""function setActiveTipo(key){
+  activeTipo = key;
+  renderAttendantDynamic();
+  refreshQueueList();
+}"""
+)
+
+content = content.replace(
+"""  await refreshWaitingCounts();
+  renderAttendantDynamic();
+  renderAttendantHistory();
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if(view !== 'attendant') return;
+    await refreshWaitingCounts();
+    renderAttendantDynamic();
+    renderAttendantHistory();
+  }, 4000);
+}""",
+"""  await refreshWaitingCounts();
+  renderAttendantDynamic();
+  renderAttendantHistory();
+  refreshQueueList();
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if(view !== 'attendant') return;
+    await refreshWaitingCounts();
+    renderAttendantDynamic();
+    renderAttendantHistory();
+    refreshQueueList();
+  }, 4000);
+}"""
+)
+
+content = content.replace(
+"window.emitirSenhaClick = emitirSenhaClick;\n",
+""
+)
+
+with open('index.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print("Substituições feitas.")
+EOF
+git add -A
+git commit -m "remove emissao manual, mostra fila de espera detalhada"
+git push

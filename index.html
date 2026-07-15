@@ -153,6 +153,16 @@
   .row-2{display:flex; gap:10px;}
   .row-2 .field{flex:1;}
 
+  .queue-list-wrap{margin-top:22px;}
+  .queue-list{display:flex; flex-wrap:wrap; gap:8px;}
+  .queue-chip{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--gold-bright);
+    font-family:'Playfair Display',serif; font-weight:700; font-size:13px;
+    padding:6px 13px; border-radius:20px;
+  }
+  .queue-chip.first{border-color:var(--gold); background:rgba(217,181,113,0.14);}
+  .queue-empty{color:var(--muted); font-size:12px;}
+
   .last-called{margin-top:24px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:16px 18px;}
   .last-called .lc-row{display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(217,181,113,0.1); gap:10px;}
   .last-called .lc-row:last-child{border-bottom:none;}
@@ -355,6 +365,11 @@ async function getProximaAguardando(tipo){
   if(error){ console.error(error); return null; }
   return (data && data[0]) ? data[0] : null;
 }
+async function getAguardandoLista(tipo, limit){
+  const { data, error } = await sb.from('senha_fila').select('*').eq('tipo', tipo).is('ts_chamada', null).order('numero', {ascending:true}).limit(limit||20);
+  if(error){ console.error(error); return []; }
+  return data;
+}
 async function getUltimasChamadas(limit){
   const { data, error } = await sb.from('senha_fila').select('*').not('ts_chamada','is', null).order('ts_chamada', {ascending:false}).limit(limit||8);
   if(error){ console.error(error); return []; }
@@ -519,6 +534,7 @@ function confirmAttendantSetup(){
 function setActiveTipo(key){
   activeTipo = key;
   renderAttendantDynamic();
+  refreshQueueList();
 }
 
 async function renderAttendant(){
@@ -548,8 +564,10 @@ async function renderAttendant(){
           </button>
         </div>
 
-        <div class="divider-word">adicionar à fila deste tipo</div>
-        <button class="btn btn-ghost" onclick="emitirSenhaClick()">+ Emitir nova senha</button>
+        <div class="queue-list-wrap">
+          <span class="eyebrow" style="display:block; margin-bottom:10px;">Fila de espera — <span id="queueTipoLabel"></span></span>
+          <div class="queue-list" id="queueList"></div>
+        </div>
 
         <div class="divider-word">ou chamar um número específico</div>
         <div class="row-2">
@@ -574,12 +592,14 @@ async function renderAttendant(){
   await refreshWaitingCounts();
   renderAttendantDynamic();
   renderAttendantHistory();
+  refreshQueueList();
   clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
     if(view !== 'attendant') return;
     await refreshWaitingCounts();
     renderAttendantDynamic();
     renderAttendantHistory();
+    refreshQueueList();
   }, 4000);
 }
 
@@ -601,10 +621,18 @@ function renderAttendantDynamic(){
   if(btn) btn.disabled = (w === 0);
 }
 
-async function emitirSenhaClick(){
-  await emitirSenha(activeTipo);
-  await refreshWaitingCounts();
-  renderAttendantDynamic();
+async function refreshQueueList(){
+  const box = document.getElementById('queueList');
+  const label = document.getElementById('queueTipoLabel');
+  if(!box) return;
+  const t = tipoInfo(activeTipo);
+  if(label) label.textContent = t.label;
+  const list = await getAguardandoLista(activeTipo, 24);
+  if(list.length === 0){
+    box.innerHTML = `<span class="queue-empty">Fila vazia — nenhuma senha aguardando</span>`;
+    return;
+  }
+  box.innerHTML = list.map((r,i) => `<span class="queue-chip ${i===0?'first':''}">${formatSenha(r.tipo, r.numero)}</span>`).join('');
 }
 
 async function renderAttendantHistory(){
@@ -880,7 +908,6 @@ window.totemEmitir = totemEmitir;
 window.setActiveTipo = setActiveTipo;
 window.chamarProxima = chamarProxima;
 window.chamarEspecifica = chamarEspecifica;
-window.emitirSenhaClick = emitirSenhaClick;
 window.rechamar = rechamar;
 window.reiniciarSistema = reiniciarSistema;
 window.tryAdminAccess = tryAdminAccess;
@@ -889,3 +916,6 @@ renderGate();
 </script>
 </body>
 </html>
+git add -A
+git commit -m "corrige index.html duplicado"
+git push
